@@ -4,7 +4,7 @@ import { Html, Outlines } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useRef, useState } from 'react';
 import * as THREE from 'three';
-import { HOTSPOT_LABELS, HOTSPOT_POSITIONS, SHIFT_JOBS, TOOL_MAP } from '@/data/shiftJobs';
+import { HOTSPOT_LABELS, HOTSPOT_POSITIONS, TOOL_MAP } from '@/data/shiftJobs';
 import { useGameStore } from '@/store/useGameStore';
 import type { BikeHotspot, ToolId } from '@/types/game';
 import { TOON_GRADIENT_MAP, useBikeSpriteTexture, usePropSpriteTexture } from './ToonMaterial';
@@ -84,7 +84,7 @@ function HotspotBeacon({
           <button
             type="button"
             onClick={() => useGameStore.getState().interactHotspot(hotspot)}
-            className={`cursor-pointer touch-manipulation whitespace-nowrap rounded-xl border-3 border-black px-3 py-1.5 text-[11px] font-black uppercase shadow-[3px_3px_0px_#000] transition-transform hover:scale-105 active:translate-y-0.5 ${
+            className={`w-max max-w-[min(84dvw,240px)] cursor-pointer touch-manipulation whitespace-normal rounded-xl border-3 border-black px-3 py-1.5 text-center text-[11px] font-black uppercase leading-tight shadow-[3px_3px_0px_#000] transition-transform hover:scale-105 active:translate-y-0.5 sm:max-w-none sm:whitespace-nowrap ${
               hasRightTool
                 ? 'animate-bounce bg-emerald-400 text-black'
                 : 'bg-amber-300 text-black'
@@ -101,6 +101,7 @@ function HotspotBeacon({
 }
 
 export function MotorcycleMesh() {
+  const shiftJobs = useGameStore((s) => s.shiftJobs);
   const currentJobIndex = useGameStore((s) => s.currentJobIndex);
   const currentStepIndex = useGameStore((s) => s.currentStepIndex);
   const phase = useGameStore((s) => s.phase);
@@ -111,7 +112,7 @@ export function MotorcycleMesh() {
   const buddyActive = useGameStore((s) => s.buddy.active);
   const equippedTool = useGameStore((s) => s.equippedTool);
 
-  const job = SHIFT_JOBS[currentJobIndex] ?? SHIFT_JOBS[0];
+  const job = shiftJobs[currentJobIndex] ?? shiftJobs[0];
   const step = job.steps[currentStepIndex];
   const activeHotspot =
     phase === 'playing' && activeHazard !== 'MISSING_SOCKET' && activeHazard !== 'BREAKER_BLOWN'

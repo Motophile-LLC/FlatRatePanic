@@ -13,13 +13,14 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-import { HOTSPOT_LABELS, SHIFT_JOBS, TOOL_MAP, TOOLS } from '@/data/shiftJobs';
+import { HOTSPOT_LABELS, TOOL_MAP, TOOLS, getJobPacing } from '@/data/shiftJobs';
 import { isTutorialTraining, useGameStore } from '@/store/useGameStore';
 import { shopAudio } from '@/utils/audio';
 
 export function GameHUD() {
   const phase = useGameStore((s) => s.phase);
   const mechanicName = useGameStore((s) => s.mechanicName);
+  const shiftJobs = useGameStore((s) => s.shiftJobs);
   const currentJobIndex = useGameStore((s) => s.currentJobIndex);
   const currentStepIndex = useGameStore((s) => s.currentStepIndex);
   const bayTimer = useGameStore((s) => Math.ceil(s.bayTimer));
@@ -34,6 +35,8 @@ export function GameHUD() {
   const wiringActive = useGameStore((s) => s.wiringActive);
   const breakerBlown = useGameStore((s) => s.breakerBlown);
   const buddyActive = useGameStore((s) => s.buddy.active);
+  const buddyLine = useGameStore((s) => s.buddy.line);
+  const buddyPatience = useGameStore((s) => Math.ceil(s.buddy.patience * 2) / 2);
   const tutorialStep = useGameStore((s) => s.tutorialStep);
   const toasts = useGameStore((s) => s.toasts);
 
@@ -41,7 +44,7 @@ export function GameHUD() {
   const [musicMuted, setMusicMuted] = useState(false);
   const helpDialogRef = useRef<HTMLDialogElement>(null);
 
-  const job = SHIFT_JOBS[currentJobIndex] ?? SHIFT_JOBS[0];
+  const job = shiftJobs[currentJobIndex] ?? shiftJobs[0];
   const step = job.steps[currentStepIndex];
 
   // Global keyboard shortcuts (1-6 tools, Space torque/hold, E dismiss buddy)
@@ -131,6 +134,8 @@ export function GameHUD() {
   const requiredTool = requiredToolId ? TOOL_MAP[requiredToolId] : null;
   const roundedTimer = Math.ceil(bayTimer);
   const inTraining = isTutorialTraining(tutorialStep);
+  const buddyMaxPatience = getJobPacing(currentJobIndex).buddyPatience;
+  const buddyPatiencePct = Math.max(0, Math.min(100, (buddyPatience / buddyMaxPatience) * 100));
 
   return (
     <div className="pointer-events-none fixed inset-0 z-20 flex flex-col justify-between pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] sm:p-4">
@@ -408,14 +413,51 @@ export function GameHUD() {
                 🔍 CATCH YOUR 10MM SOCKET! Tap it on the floor (dodge oil!)
               </div>
             ) : buddyActive ? (
-              <button
-                type="button"
-                onClick={() => useGameStore.getState().dismissBuddy()}
-                className="flex min-h-[44px] w-full animate-bounce cursor-pointer items-center justify-center rounded-2xl border-4 border-black bg-orange-400 px-3 py-1.5 text-center text-[11px] font-black uppercase text-black shadow-[5px_5px_0px_#000] sm:w-auto sm:px-4 sm:py-2 sm:text-sm"
-              >
-                🗣️ CHATTY BUDDY! Tap Him or Tap Here{' '}
-                <span className="hidden sm:inline">[E]</span> to SHOO!
-              </button>
+              <>
+                {/* Mobile Portrait: Readable Comic Speech Popup Card for Dyna Bro */}
+                <button
+                  type="button"
+                  onClick={() => useGameStore.getState().dismissBuddy()}
+                  className="flex w-full cursor-pointer items-center gap-3 rounded-2xl border-4 border-black bg-amber-50 p-3 text-left text-black shadow-[6px_6px_0px_#000] active:translate-y-0.5 md:hidden [@media(orientation:portrait)]:flex"
+                >
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border-2 border-black bg-amber-200">
+                    <Image
+                      src="/sprites/portraits/dynabro.png"
+                      alt="Dyna Bro"
+                      fill
+                      className="object-contain object-top"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-black uppercase tracking-wide text-orange-700">
+                        DYNA BRO
+                      </span>
+                      <span className="rounded bg-black px-2 py-0.5 text-[10px] font-black uppercase text-amber-300">
+                        TAP TO SHOO
+                      </span>
+                    </div>
+                    <p className="text-[13px] font-extrabold leading-snug text-zinc-900">
+                      &ldquo;{buddyLine || 'Hey bro, got a quick question!'}&rdquo;
+                    </p>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full border border-black bg-zinc-200">
+                      <div
+                        className="h-full bg-red-500 transition-all"
+                        style={{ width: `${buddyPatiencePct}%` }}
+                      />
+                    </div>
+                  </div>
+                </button>
+
+                {/* Tablet/Desktop Landscape: Existing compact orange shoo bar */}
+                <button
+                  type="button"
+                  onClick={() => useGameStore.getState().dismissBuddy()}
+                  className="hidden min-h-[44px] animate-bounce cursor-pointer items-center justify-center rounded-2xl border-4 border-black bg-orange-400 px-4 py-2 text-center text-sm font-black uppercase text-black shadow-[5px_5px_0px_#000] md:flex [@media(orientation:portrait)]:hidden"
+                >
+                  🗣️ CHATTY BUDDY! Click Him or Click Here [E] to SHOO!
+                </button>
+              </>
             ) : requiredTool && equippedTool !== requiredToolId ? (
               <div className="flex min-h-[44px] w-full items-center justify-center rounded-2xl border-4 border-black bg-amber-300 px-3 py-1.5 text-center text-[11px] font-black uppercase text-black shadow-[5px_5px_0px_#000] sm:w-auto sm:px-4 sm:py-2 sm:text-sm">
                 STEP 1 OF 2: Tap {requiredTool.shortName} below

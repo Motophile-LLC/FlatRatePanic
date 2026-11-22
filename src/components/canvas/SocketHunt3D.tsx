@@ -49,13 +49,13 @@ export function SocketHunt3D() {
 
   return (
     <group>
-      {/* Fixed shop floor + perimeter bumpers so socket never escapes camera */}
+      {/* Fixed shop floor + portrait-friendly perimeter bumpers so socket stays visible on phones */}
       <RigidBody type="fixed" restitution={0.65} friction={0.3}>
         <CuboidCollider args={[6.5, 0.2, 5.5]} position={[0, -0.2, 0]} />
-        <CuboidCollider args={[0.2, 1.5, 4.5]} position={[-4.2, 1.2, 0.4]} />
-        <CuboidCollider args={[0.2, 1.5, 4.5]} position={[4.2, 1.2, 0.4]} />
+        <CuboidCollider args={[0.2, 1.5, 4.5]} position={[-2.15, 1.2, 0.4]} />
+        <CuboidCollider args={[0.2, 1.5, 4.5]} position={[2.45, 1.2, 0.4]} />
         <CuboidCollider args={[6.0, 1.5, 0.2]} position={[0, 1.2, -3.4]} />
-        <CuboidCollider args={[6.0, 1.5, 0.2]} position={[0, 1.2, 3.6]} />
+        <CuboidCollider args={[6.0, 1.5, 0.2]} position={[0, 1.2, 2.6]} />
       </RigidBody>
 
       {/* Rolling 10mm Socket when MISSING_SOCKET is active */}

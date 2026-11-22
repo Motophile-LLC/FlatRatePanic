@@ -6,6 +6,7 @@ import {
   SHIFT_JOBS,
   SHOP_BUDDY_LINES,
   TOOL_MAP,
+  drawShiftJobs,
   getJobPacing,
 } from '@/data/shiftJobs';
 import type {
@@ -13,6 +14,7 @@ import type {
   BuddyPose,
   GamePhase,
   HazardType,
+  JobDefinition,
   MechanicPose,
   OilSpill,
   ParticleBurst,
@@ -48,6 +50,7 @@ interface SquashEvent {
 export interface GameState {
   phase: GamePhase;
   mechanicName: string;
+  shiftJobs: JobDefinition[];
   currentJobIndex: number;
   currentStepIndex: number;
 
@@ -157,8 +160,8 @@ function createBurst(
   };
 }
 
-function getInitialBuddyDelay(jobIndex: number): number {
-  const job = SHIFT_JOBS[jobIndex] ?? SHIFT_JOBS[0];
+function getInitialBuddyDelay(jobs: JobDefinition[], jobIndex: number): number {
+  const job = jobs[jobIndex] ?? jobs[0];
   return randomBetween(job.buddyIntervalMin, job.buddyIntervalMax);
 }
 
@@ -178,6 +181,7 @@ function markTutorialDoneStorage(): void {
 export const useGameStore = create<GameState>((set, get) => ({
   phase: 'clock_in',
   mechanicName: 'Wrencher',
+  shiftJobs: SHIFT_JOBS,
   currentJobIndex: 0,
   currentStepIndex: 0,
 
@@ -223,7 +227,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     patience: 0,
     dismissedCount: 0,
   },
-  nextBuddyIn: getInitialBuddyDelay(0),
+  nextBuddyIn: getInitialBuddyDelay(SHIFT_JOBS, 0),
 
   pendingExtraBolt: false,
   extraBoltOutcome: null,
@@ -244,7 +248,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   clockIn: (rawName: string, withTutorial = false) => {
     const cleanName = rawName.trim().slice(0, 24) || 'Grease Monkey';
-    const firstJob = SHIFT_JOBS[0];
+    const nextJobs = drawShiftJobs(withTutorial);
+    const firstJob = nextJobs[0];
     shopAudio.unlockAudio();
     shopAudio.setRadioTempo(getJobPacing(0).radioBaseTempo);
     shopAudio.startShopRadio();
@@ -252,6 +257,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       phase: 'intro',
       mechanicName: cleanName,
+      shiftJobs: nextJobs,
       currentJobIndex: 0,
       currentStepIndex: 0,
       bayTimer: firstJob.parSeconds,
@@ -292,7 +298,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         patience: 0,
         dismissedCount: 0,
       },
-      nextBuddyIn: getInitialBuddyDelay(0),
+      nextBuddyIn: getInitialBuddyDelay(nextJobs, 0),
       pendingExtraBolt: false,
       extraBoltOutcome: null,
       tutorialStep: withTutorial ? 'pick_brake_cleaner' : 'inactive',
@@ -301,7 +307,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           id: toastCounter++,
           text: withTutorial
             ? `Orientation started for ${cleanName}! Clock is paused while you learn.`
-            : `Clocked in as ${cleanName}! Pick the highlighted tool [1-6], then click the bike.`,
+            : `Clocked in as ${cleanName}! Pick the highlighted tool below, then tap the bike.`,
           tone: 'good',
           ttl: 5.5,
         },
@@ -352,7 +358,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   advanceToNextJob: () => {
     const state = get();
     const nextIdx = state.currentJobIndex + 1;
-    if (nextIdx >= SHIFT_JOBS.length) {
+    if (nextIdx >= state.shiftJobs.length) {
       set({
         phase: 'extra_bolt',
         pendingExtraBolt: true,
@@ -362,7 +368,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       return;
     }
 
-    const job = SHIFT_JOBS[nextIdx];
+    const job = state.shiftJobs[nextIdx];
     set({
       phase: 'intro',
       currentJobIndex: nextIdx,
@@ -383,7 +389,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       holdProgress: 0,
       holdingActive: false,
       wiringActive: false,
-      nextBuddyIn: getInitialBuddyDelay(nextIdx),
+      nextBuddyIn: getInitialBuddyDelay(state.shiftJobs, nextIdx),
       buddy: {
         ...state.buddy,
         active: false,
@@ -397,7 +403,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get();
     if (state.phase !== 'playing') return;
 
-    const job = SHIFT_JOBS[state.currentJobIndex];
+    const job = state.shiftJobs[state.currentJobIndex];
     const inTraining = isTutorialTraining(state.tutorialStep);
     const isWrench = tool === 'torque_wrench' || tool === 'impact_gun';
     const canDropSocket =
@@ -497,7 +503,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       return;
     }
 
-    const job = SHIFT_JOBS[state.currentJobIndex];
+    const job = state.shiftJobs[state.currentJobIndex];
     const step = job.steps[state.currentStepIndex];
     if (!step) return;
 
@@ -647,7 +653,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get();
     if (!state.torqueActive || state.phase !== 'playing') return;
 
-    const job = SHIFT_JOBS[state.currentJobIndex];
+    const job = state.shiftJobs[state.currentJobIndex];
     const step = job.steps[state.currentStepIndex];
     if (!step) return;
 
@@ -798,7 +804,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   failWiring: (reason: string) => {
     const state = get();
-    const job = SHIFT_JOBS[state.currentJobIndex];
+    const job = state.shiftJobs[state.currentJobIndex];
     const step = job?.steps[state.currentStepIndex];
     const [px, py, pz] = HOTSPOT_POSITIONS[step?.hotspot ?? 'handlebars'];
 
@@ -835,7 +841,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get();
     if (!state.breakerBlown) return;
     shopAudio.playBreakerReset();
-    const job = SHIFT_JOBS[state.currentJobIndex];
+    const job = state.shiftJobs[state.currentJobIndex];
     const step = job.steps[state.currentStepIndex];
     set({
       breakerBlown: false,
@@ -858,7 +864,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   resolveSocketHunt: () => {
     const state = get();
     if (state.activeHazard !== 'MISSING_SOCKET') return;
-    const job = SHIFT_JOBS[state.currentJobIndex];
+    const job = state.shiftJobs[state.currentJobIndex];
     const step = job.steps[state.currentStepIndex];
     shopAudio.playTorqueClick();
 
@@ -1044,7 +1050,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       return;
     }
 
-    const job = SHIFT_JOBS[state.currentJobIndex];
+    const job = state.shiftJobs[state.currentJobIndex];
     const pacing = getJobPacing(state.currentJobIndex);
     const step = job?.steps[state.currentStepIndex];
     const inTraining = isTutorialTraining(state.tutorialStep);
@@ -1087,7 +1093,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         : pacing.radioBaseTempo;
     shopAudio.setRadioTempo(targetTempo);
     const writerPose: ServiceWriterPose =
-      nextChaos >= 50 || state.currentJobIndex === SHIFT_JOBS.length - 1 ? 'pacing' : 'calm';
+      nextChaos >= 50 || state.currentJobIndex >= state.shiftJobs.length - 1 ? 'pacing' : 'calm';
 
     // Torque needle & Hold progress updates (runs outside React render tree!)
     let nextNeedle = state.torqueNeedle;
@@ -1228,7 +1234,7 @@ function completeCurrentStep(
   customToast?: string,
 ) {
   const state = get();
-  const job = SHIFT_JOBS[state.currentJobIndex];
+  const job = state.shiftJobs[state.currentJobIndex];
   const step = job.steps[state.currentStepIndex];
   const [px, py, pz] = HOTSPOT_POSITIONS[step.hotspot];
   const nextStepIdx = state.currentStepIndex + 1;
@@ -1288,7 +1294,7 @@ function completeCurrentStep(
 
   // Job finished!
   shopAudio.playCelebrate();
-  const isLastJob = state.currentJobIndex >= SHIFT_JOBS.length - 1;
+  const isLastJob = state.currentJobIndex >= state.shiftJobs.length - 1;
   const underParBonus = state.bayTimer > 0 ? Math.round(state.bayTimer * 6) : 0;
 
   set({

@@ -23,8 +23,9 @@ export function ShopBuddyNPC() {
   useFrame((state, delta) => {
     if (!groupRef.current) return;
     const isBuddyActive = useGameStore.getState().buddy.active;
-    const targetX = isBuddyActive ? 3.2 : 5.2;
-    const targetZ = isBuddyActive ? 0.88 : -0.4;
+    const isPortrait = state.size.width / Math.max(1, state.size.height) < 0.9;
+    const targetX = isBuddyActive ? (isPortrait ? 1.45 : 3.2) : 5.2;
+    const targetZ = isBuddyActive ? (isPortrait ? 1.15 : 0.88) : -0.4;
     posX.current = THREE.MathUtils.lerp(posX.current, targetX, Math.min(1, delta * 3.8));
     posZ.current = THREE.MathUtils.lerp(posZ.current, targetZ, Math.min(1, delta * 3.8));
 
@@ -74,7 +75,7 @@ export function ShopBuddyNPC() {
             <button
               type="button"
               onClick={() => useGameStore.getState().dismissBuddy()}
-              className="group w-56 cursor-pointer rounded-xl border-3 border-black bg-amber-50 p-2.5 text-left text-black shadow-[4px_4px_0px_#111] transition-transform hover:-translate-y-0.5 active:translate-y-0"
+              className="group hidden w-56 cursor-pointer rounded-xl border-3 border-black bg-amber-50 p-2.5 text-left text-black shadow-[4px_4px_0px_#111] transition-transform hover:-translate-y-0.5 active:translate-y-0 md:block [@media(orientation:portrait)]:hidden"
             >
               <div className="mb-1 flex items-center justify-between text-[11px] font-black uppercase tracking-wide text-orange-700">
                 <span>DYNA BRO</span>

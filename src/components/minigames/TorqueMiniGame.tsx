@@ -2,13 +2,14 @@
 
 import { Flame, Gauge, Sparkles, Wrench, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { HOTSPOT_LABELS, SHIFT_JOBS, TOOL_MAP, getJobPacing } from '@/data/shiftJobs';
+import { HOTSPOT_LABELS, TOOL_MAP, getJobPacing } from '@/data/shiftJobs';
 import { isTutorialTraining, useGameStore } from '@/store/useGameStore';
 
 export function TorqueMiniGame() {
   const torqueActive = useGameStore((s) => s.torqueActive);
   const torquePhase = useGameStore((s) => s.torquePhase);
   const activeHazard = useGameStore((s) => s.activeHazard);
+  const shiftJobs = useGameStore((s) => s.shiftJobs);
   const currentJobIndex = useGameStore((s) => s.currentJobIndex);
   const currentStepIndex = useGameStore((s) => s.currentStepIndex);
   const torqueTargetCenter = useGameStore((s) => s.torqueTargetCenter);
@@ -20,7 +21,7 @@ export function TorqueMiniGame() {
   const holdBarRef = useRef<HTMLDivElement>(null);
   const holdPctRef = useRef<HTMLSpanElement>(null);
 
-  const job = SHIFT_JOBS[currentJobIndex] ?? SHIFT_JOBS[0];
+  const job = shiftJobs[currentJobIndex] ?? shiftJobs[0];
   const pacing = getJobPacing(currentJobIndex);
   const step = job.steps[currentStepIndex];
 

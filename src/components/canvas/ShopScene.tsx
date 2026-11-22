@@ -86,7 +86,7 @@ function BreakerPanel() {
           <button
             type="button"
             onClick={() => useGameStore.getState().resetBreaker()}
-            className="animate-bounce cursor-pointer whitespace-nowrap rounded-lg border-3 border-black bg-red-500 px-3 py-1 text-xs font-black uppercase text-white shadow-[3px_3px_0px_#000]"
+            className="hidden animate-bounce cursor-pointer whitespace-nowrap rounded-lg border-3 border-black bg-red-500 px-3 py-1 text-xs font-black uppercase text-white shadow-[3px_3px_0px_#000] sm:block"
           >
             CLICK TO RESET BREAKER!
           </button>

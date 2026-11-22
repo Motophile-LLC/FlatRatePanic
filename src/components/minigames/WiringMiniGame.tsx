@@ -2,7 +2,7 @@
 
 import { AlertTriangle, X, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { SHIFT_JOBS, getJobPacing } from '@/data/shiftJobs';
+import { getJobPacing } from '@/data/shiftJobs';
 import { useGameStore } from '@/store/useGameStore';
 
 interface WireColorDef {
@@ -231,12 +231,13 @@ function WiringMiniGameBoard({
 
 export function WiringMiniGame() {
   const wiringActive = useGameStore((s) => s.wiringActive);
+  const shiftJobs = useGameStore((s) => s.shiftJobs);
   const currentJobIndex = useGameStore((s) => s.currentJobIndex);
   const currentStepIndex = useGameStore((s) => s.currentStepIndex);
 
   if (!wiringActive) return null;
 
-  const job = SHIFT_JOBS[currentJobIndex] ?? SHIFT_JOBS[0];
+  const job = shiftJobs[currentJobIndex] ?? shiftJobs[0];
   const pacing = getJobPacing(currentJobIndex);
   const step = job.steps[currentStepIndex];
 
