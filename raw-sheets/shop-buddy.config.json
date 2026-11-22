@@ -1,0 +1,13 @@
+{
+  "mode": "grid",
+  "cols": 2,
+  "rows": 2,
+  "chromaKey": "#00FF00",
+  "tolerance": 76,
+  "poses": [
+    "idle",
+    "talking",
+    "borrowing",
+    "dismissed"
+  ]
+}

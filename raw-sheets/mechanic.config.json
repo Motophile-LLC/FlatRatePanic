@@ -1,0 +1,15 @@
+{
+  "mode": "grid",
+  "cols": 3,
+  "rows": 2,
+  "chromaKey": "#00FF00",
+  "tolerance": 76,
+  "poses": [
+    "idle",
+    "wrenching",
+    "panicked",
+    "electrocuted",
+    "facepalm",
+    "celebrate"
+  ]
+}
